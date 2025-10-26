@@ -1,8 +1,8 @@
 # Advanced RAG System with Agentic Enrichment
 
-A production-ready Retrieval-Augmented Generation (RAG) system with intelligent completeness checking and enrichment suggestions. It uses a vector database for storage and retrieval, an OpenAI-compatible LLM API for generation and reflection, and an agentic workflow to control quality.
+A Retrieval-Augmented Generation (RAG) system with intelligent completeness checking and enrichment suggestions. It uses a vector database for storage and retrieval, an OpenAI-compatible LLM API for generation and reflection, and an agentic workflow to control quality.
 
-## 🎯 Core Features
+## Core Features
 - Document upload (PDF, TXT, MD, JSON, CSV) with chunking and vector storage
 - Natural language querying with grounded answers and source citations
 - Reflection-based completeness detection and actionable enrichment suggestions
@@ -11,7 +11,7 @@ A production-ready Retrieval-Augmented Generation (RAG) system with intelligent 
 
 ---
 
-## 🎨 Design Decisions
+## Design Decisions
 
 1) Local Embeddings (Sentence Transformers)
 - Why: Control, cost-efficiency, privacy; no external embedding API required
@@ -28,19 +28,26 @@ A production-ready Retrieval-Augmented Generation (RAG) system with intelligent 
 - Impact: Generation and reflection are decoupled from embeddings; reflection checks completeness/ambiguity
 - Outcome: Better answer reliability with minimal architecture complexity
 
-4) Agentic Orchestration (Workflow with Conditional Routing)
-- Why: Move beyond linear pipelines to handle ambiguity, retries, and enrichment
-- Impact: Nodes for analysis → RAG → reflection → conditional route (complete/ambiguous/incomplete/retry)
-- Outcome: Clear, maintainable control flow with instrumentation (execution trace)
+4) Haystack for Document Processing Pipeline
+- Why: Robust, modular framework for building RAG pipelines with pre-built components
+- Framework: Haystack provides document converters, preprocessors, and pipeline abstractions
+- Impact: Handles diverse file formats (PDF, TXT, MD, JSON, CSV) with minimal custom code
+- Outcome: Reliable document ingestion with chunking, metadata extraction, and error handling
 
-5) Static Web UI Served by Backend
+5) Agentic Orchestration with LangGraph
+- Why: Move beyond linear pipelines to handle ambiguity, retries, and enrichment using state machine graphs
+- Framework: LangGraph's StateGraph enables declarative workflow definition with conditional routing
+- Impact: Nodes for analysis → RAG → reflection → conditional route (complete/ambiguous/incomplete/retry)
+- Outcome: Clear, maintainable control flow with instrumentation (execution trace) and easy debugging of agent states
+
+6) Static Web UI Served by Backend
 - Why: Zero extra services; works out-of-the-box
 - Impact: One process serves API and UI; static assets under a single origin
 - Outcome: Simple deployment and testing experience
 
 ---
 
-## ⚖️ Trade-offs Due to the 24h Constraint
+## Trade-offs Due to the 24h Constraint
 
 What I prioritized
 - End-to-end path: ingest → retrieve → generate → reflect → respond
@@ -63,7 +70,7 @@ Why these choices
 
 ---
 
-## 🚀 How to Run
+## How to Run
 
 Prerequisites
 - Python 3.13+
@@ -84,7 +91,7 @@ Run the backend (serves API + UI)
 
 ---
 
-## ✅ How to Test
+## How to Test
 
 From the UI
 - Upload documents (drag-and-drop or click) in supported formats
@@ -111,9 +118,11 @@ Expected behavior
 
 ---
 
-## 📦 Project Summary
+## Project Summary
 
 - Local embeddings + vector DB deliver fast, private retrieval
+- Haystack handles robust document processing across multiple formats
+- LangGraph orchestrates agentic workflows with state management and conditional routing
 - Agentic reflection improves answer completeness and user guidance
 - Single-process API + static UI keeps running/testing simple
 - Clear maintenance endpoints for visibility and control
