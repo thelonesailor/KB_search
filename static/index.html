@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced RAG System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Advanced RAG System</h1>
+            <p class="subtitle">Ask questions about your documents with AI-powered intelligence</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section card">
+                <h2>📁 Upload Documents</h2>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" multiple accept=".pdf,.txt,.md,.json,.csv" hidden>
+                    <div class="upload-placeholder">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        <p>Click to upload or drag and drop</p>
+                        <span class="file-types">PDF, TXT, MD, JSON, CSV</span>
+                    </div>
+                </div>
+                <div id="uploadStatus" class="status-message"></div>
+                <div id="fileList" class="file-list"></div>
+            </section>
+
+            <!-- Documents Library Section -->
+            <section class="documents-section card">
+                <div class="section-header">
+                    <h2>📚 Documents Library</h2>
+                    <button id="refreshDocsButton" class="btn-small btn-secondary">
+                        <span>🔄 Refresh</span>
+                    </button>
+                </div>
+                <div id="documentsContainer" class="documents-container">
+                    <p class="empty-state">No documents uploaded yet. Upload documents above to get started.</p>
+                </div>
+            </section>
+
+            <!-- Query Section -->
+            <section class="query-section card">
+                <h2>💬 Ask a Question</h2>
+                <div class="query-input-container">
+                    <textarea 
+                        id="queryInput" 
+                        placeholder="What would you like to know about your documents?"
+                        rows="3"
+                    ></textarea>
+                    <button id="queryButton" class="btn btn-primary">
+                        <span class="btn-text">Ask Question</span>
+                        <span class="btn-loading" hidden>
+                            <span class="spinner"></span> Processing...
+                        </span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section card" id="resultsSection" hidden>
+                <h2>📝 Answer</h2>
+                <div class="answer-container">
+                    <div id="answerText" class="answer-text"></div>
+
+                    <div class="metadata-grid">
+                        <div class="metadata-item">
+                            <span class="metadata-label">Confidence</span>
+                            <div class="confidence-bar-container">
+                                <div id="confidenceBar" class="confidence-bar"></div>
+                                <span id="confidenceText" class="confidence-text"></span>
+                            </div>
+                        </div>
+
+                        <div class="metadata-item">
+                            <span class="metadata-label">Completeness</span>
+                            <span id="completenessText" class="completeness-badge"></span>
+                        </div>
+                    </div>
+
+                    <div id="sourcesContainer" class="sources-container" hidden>
+                        <h3>📚 Sources</h3>
+                        <div id="sourcesList" class="sources-list"></div>
+                    </div>
+
+                    <div id="missingInfoContainer" class="missing-info-container" hidden>
+                        <h3>⚠️ Missing Information</h3>
+                        <ul id="missingInfoList" class="missing-info-list"></ul>
+                    </div>
+
+                    <div id="suggestionsContainer" class="suggestions-container" hidden>
+                        <h3>💡 Enrichment Suggestions</h3>
+                        <div id="suggestionsList" class="suggestions-list"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Status -->
+            <section class="status-section card">
+                <h2>📊 System Status</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <span class="status-label">Database</span>
+                        <span id="dbStatus" class="status-value">Checking...</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
