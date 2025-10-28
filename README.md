@@ -126,3 +126,72 @@ Expected behavior
 - Agentic reflection improves answer completeness and user guidance
 - Single-process API + static UI keeps running/testing simple
 - Clear maintenance endpoints for visibility and control
+
+---
+
+## LangGraph Workflow
+
+This project uses LangGraph to orchestrate the agentic RAG flow as a small state machine. LangGraph provides a `StateGraph` that:
+- Defines nodes (steps) and edges (transitions)
+- Carries a shared state through the graph (`AgentState`)
+- Supports conditional routing and controlled loopbacks
+- Compiles to a runnable that we invoke per query
+
+### Where it’s implemented
+- Orchestrator and graph: `agents/enrichment.py`
+  - Graph assembly: `EnrichmentOrchestrator._build_workflow()`
+  - Graph execution entry point: `EnrichmentOrchestrator.process_query()`
+- API integration: `main.py`
+  - Built at startup in `startup_event()` and stored globally
+  - Invoked from the `/query` endpoint
+- State model: `models.py`
+  - `AgentState` describes what flows between nodes
+
+### The shared state (`AgentState`)
+`models.py` defines the Pydantic model. Key fields used by the graph:
+- `user_query`: original user query
+- `query_analysis`: intent, sub‑questions, required data elements
+- `generation_output`: model answer, sources, confidence
+- `reflection_result`: completeness, ambiguity, missing elements
+- `clarification_response`: simulated user clarification text
+- `enriched_data`: simulated dynamic augmentation content
+- `final_answer`: final string returned to clients
+- `execution_trace`: list of trace messages for debugging
+- `retry_count`, `enrichment_suggestions`
+
+Note: Although we declare `AgentState` as the graph state type, LangGraph returns a plain dict at runtime. The API normalizes both dict and object forms before formatting the response.
+
+### Graph construction (nodes and edges)
+The graph is created in `_build_workflow()`:
+
+High‑level flow:
+```
+user query
+  ↓
+analyze_query ──→ execute_rag ──┬─ reflect_on_output ──┬─ complete ─→ generate_final_answer → END
+                                │                      ├─ ambiguous ─→ handle_ambiguity ─┐
+                                │                      ├─ incomplete ─→ enrich_data ─────┤
+                                │                      └── retry ────────────────────────┘
+                                └─ skip (high confidence) ─────────────→ generate_final_answer → END
+```
+
+### What each node does
+- `analyze_query`: Uses Perplexity to infer intent/sub‑questions; writes `query_analysis` and traces.
+- `execute_rag`: Calls `QdrantRAGCore.retrieve_and_generate()`; writes `generation_output` (answer, sources, confidence) and increments `retry_count`.
+- `reflect_on_output`: Uses a reasoning model to set `reflection_result` (`is_complete`, `ambiguity_detected`, `missing_elements`, `confidence_score`).
+- `handle_ambiguity`: Simulates asking the user a clarifying question, sets a `clarification_response`, then loops back to re‑execute RAG.
+- `enrich_data`: Simulates dynamic augmentation for the top missing elements and stores them in `enriched_data` before re‑running RAG.
+- `generate_final_answer`: Produces `final_answer` (optionally appends enriched data) and creates `enrichment_suggestions` to guide the user.
+
+### Conditional routing rules
+- `_should_reflect(state) -> {"reflect"|"skip"}`
+  - If `confidence > 0.7` and there are sources, skip reflection and finalize.
+  - Otherwise reflect on the output first.
+- `_route_after_reflection(state) -> {complete|ambiguous|incomplete|retry}`
+  - Chooses a path using `is_complete`,a `confidence_score`, `ambiguity_detected`, `missing_elements`, and `retry_count`.
+
+### How execution is triggered
+- At startup (`main.py`), the app builds `QdrantRAGCore`, then instantiates `EnrichmentOrchestrator`, which compiles the LangGraph.
+- On `/query`, the API calls `orchestrator.process_query(query)`:
+- `recursion_limit` increases the maximum call depth to allow at most a small number of loopbacks.
+- The result is a dict‑like state; the API extracts fields (`answer`, `sources`, `confidence`, `missing_info`, `enrichment_suggestions`, etc.) for the HTTP response.
